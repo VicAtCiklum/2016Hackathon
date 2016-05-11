@@ -1,5 +1,6 @@
 package com.ciklum.firstresponder;
 
+import android.graphics.Point;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -17,39 +18,45 @@ import java.net.URL;
  * Created by victorllana on 5/11/16.
  */
 public class GetJson extends AsyncTask<Void, Void, JSONObject> {
-    private String mUrl;
-    public GetJson(String url) {
-        mUrl = url;
+    public interface GetJsonListener {
+        public void onJsonReceived(JSONObject jsonObject);
     }
 
-    public static String getRoomMessages() {
-        return MessagesAdapter.MESSAGES_URL +
-                "?" +
-                MessagesAdapter.ROOM_ID_QUERY +
-                "=" +
-                MessagesAdapter.ROOM_ID;
+    private GetJsonListener mListener;
+    private String mUrl;
+    public GetJson(String url, GetJsonListener listener) {
+        mUrl = url;
+        mListener = listener;
     }
+
     @Override
     protected JSONObject doInBackground(Void... params) {
 
         URL fileURL = null;
         JSONObject jsonObject = null;
         try {
-            fileURL = new URL(getRoomMessages());
+            fileURL = new URL(mUrl);
             HttpURLConnection connection = (HttpURLConnection) fileURL
                     .openConnection();
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("Authorization", MessagesAdapter.AUTHORIZATION);
             connection.setRequestMethod("GET");
             connection.connect();
-
+            int responseCode = connection.getResponseCode();
+            Log.v("VIC:", "responseCode:" + responseCode);
             BufferedInputStream inputStream = new BufferedInputStream(
                     connection.getInputStream());
 
             Log.v("VIC:", "contentLength: " + connection.getContentLength());
             byte[] data = new byte[1024];
-            int read = inputStream.read(data);
+            int readSize = inputStream.read(data);
             StringBuilder stringData = new StringBuilder();
-            while (read >= 0) {
-                stringData.append(new String(data, 0, read));
+            while (readSize >= 0) {
+                Log.v("VIC:", "readSize " + readSize);
+                String temp_read = new String(data, 0, readSize);
+                Log.v("VIC:", "temp_read" + temp_read);
+                stringData.append(temp_read);
+                readSize = inputStream.read(data);
             }
             Log.v("VIC:",stringData.toString());
             inputStream.close();
@@ -65,5 +72,12 @@ public class GetJson extends AsyncTask<Void, Void, JSONObject> {
         }
 
         return jsonObject;
+    }
+
+    @Override
+    protected void onPostExecute(JSONObject jsonObject) {
+        if (mListener != null) {
+            mListener.onJsonReceived(jsonObject);
+        }
     }
 }
