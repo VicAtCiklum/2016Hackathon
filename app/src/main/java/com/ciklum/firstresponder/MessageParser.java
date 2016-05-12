@@ -14,12 +14,12 @@ import java.util.ArrayList;
 public class MessageParser {
 
     public interface OnParseMessageListener {
-         void onIncidentOpen();
+         void onIncidentOpen(String address);
          void onBpmUpdate(int bpm);
          void onIncidentStop();
     }
 
-    private static String TAG_CLOSED = "#closed";
+    private static String TAG_CLOSED = "#close";
     private static String TAG_OPEN = "#open";
     private static String TAG_BPM = "#bpm";
 
@@ -51,7 +51,7 @@ public class MessageParser {
                         mListener.onBpmUpdate(parseBpm(message.getText()));
                         break;
                     } else if (message.getText().contains(TAG_OPEN)) {
-                        mListener.onIncidentOpen();
+                        mListener.onIncidentOpen(parseAddress(message.getText()));
                         break;
                     }
                 }
@@ -67,5 +67,12 @@ public class MessageParser {
         String num = text.substring(index + TAG_BPM.length() + 1);
         Log.v("VIC:", "string num:" + num);
         return Integer.parseInt(num);
+    }
+
+    private String parseAddress(String text) {
+        int index = text.indexOf(TAG_OPEN);
+        String address = text.substring(index + TAG_BPM.length() + 1);
+        Log.v("VIC:", "string address:" + address);
+        return address;
     }
 }
