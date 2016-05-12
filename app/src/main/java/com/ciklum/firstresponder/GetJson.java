@@ -1,6 +1,5 @@
 package com.ciklum.firstresponder;
 
-import android.graphics.Point;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -43,22 +42,22 @@ public class GetJson extends AsyncTask<Void, Void, JSONObject> {
             connection.setRequestMethod("GET");
             connection.connect();
             int responseCode = connection.getResponseCode();
-            Log.v("VIC:", "responseCode:" + responseCode);
+            //Log.v("VIC:", "responseCode:" + responseCode);
             BufferedInputStream inputStream = new BufferedInputStream(
                     connection.getInputStream());
 
-            Log.v("VIC:", "contentLength: " + connection.getContentLength());
+            //Log.v("VIC:", "contentLength: " + connection.getContentLength());
             byte[] data = new byte[1024];
             int readSize = inputStream.read(data);
             StringBuilder stringData = new StringBuilder();
             while (readSize >= 0) {
-                Log.v("VIC:", "readSize " + readSize);
+                //Log.v("VIC:", "readSize " + readSize);
                 String temp_read = new String(data, 0, readSize);
-                Log.v("VIC:", "temp_read" + temp_read);
+                //Log.v("VIC:", "temp_read" + temp_read);
                 stringData.append(temp_read);
                 readSize = inputStream.read(data);
             }
-            Log.v("VIC:",stringData.toString());
+            //Log.v("VIC:",stringData.toString());
             inputStream.close();
                 jsonObject = new JSONObject(stringData.toString());
         } catch (JSONException e) {

@@ -6,17 +6,17 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.ListView;
 
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements MessageParser.OnParseMessageListener{
     private static final int MSG_POLL_INTERVAL = 5000;
 
     private Handler mHandler = new Handler();
 
     ListView mListView;
     MessagesAdapter mAdapter;
+    private boolean mIsActive;
+    private MessageParser mMessageParser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,16 +26,19 @@ public class MainActivity extends AppCompatActivity {
         mAdapter = new MessagesAdapter(this);
         mListView.setAdapter(mAdapter);
         startMessagePolling();
+        mMessageParser = new MessageParser();
+        mMessageParser.setOnMessageListener(this);
     }
 
 
     private GetJson.GetJsonListener mOnGetRoomMessagesJson = new GetJson.GetJsonListener() {
         @Override
         public void onJsonReceived(JSONObject jsonObject) {
-            mAdapter.updateMessages(jsonObject);
-            mAdapter.notifyDataSetChanged();
-            mListView.setSelection(mAdapter.getCount() - 1);
+            //mAdapter.updateMessages(jsonObject);
+            //mAdapter.notifyDataSetChanged();
+            //mListView.setSelection(mAdapter.getCount() - 1);
             mIsPolling = false;
+            mMessageParser.parseMessage(jsonObject);
             mHandler.postDelayed(mPollMessages, MSG_POLL_INTERVAL);
         }
     };
@@ -58,4 +61,28 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
+
+    @Override
+    public void onIncidentOpen() {
+        //ignore if we're already active
+        if(!mIsActive) {
+            mIsActive = true;
+            Log.v("VIC:", "onIncidentOpen");
+        }
+    }
+
+    @Override
+    public void onBpmUpdate(int bpm) {
+        Log.v("VIC:", "onBpmUpdate:" + bpm);
+        if (mIsActive) {
+            
+        }
+
+    }
+
+    @Override
+    public void onIncidentStop() {
+        Log.v("VIC:", "onIncidentStop");
+        mIsActive = false;
+    }
 }

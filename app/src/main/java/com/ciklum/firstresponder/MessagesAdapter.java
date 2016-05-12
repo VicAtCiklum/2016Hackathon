@@ -24,6 +24,8 @@ public class MessagesAdapter extends BaseAdapter {
     public static final String MESSAGES_URL = "https://api.ciscospark.com/v1/messages";
     public static final String ROOM_ID_QUERY = "roomId";
 
+
+
     /*
     "id" : "46ef3f0a-e810-460c-ad37-c161adb48195",
             "personId" : "49465565-f6db-432f-ab41-34b15f544a36",
@@ -36,55 +38,12 @@ public class MessagesAdapter extends BaseAdapter {
             "created" : "2015-10-18T14:26:16+00:00"
             */
 
-    private class Message {
-        JSONObject mJsonObject;
-        public Message(JSONObject jsonObject) {
-            mJsonObject = jsonObject;
-        }
-
-        public String getText() {
-            String ret = null;
-            try {
-                ret = mJsonObject.getString("text");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-            return ret;
-        }
-
-        public String getFrom() {
-            String ret = null;
-            try {
-                ret = mJsonObject.getString("personEmail");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-            return ret;
-        }
-
-        public String getTime() {
-            String ret = null;
-            try {
-                ret = mJsonObject.getString("created");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-            return ret;
-        }
-    }
-
-
-
     private ArrayList<Message> mMessages;
     private Context mContext;
 
-    public MessagesAdapter (Context context) {
+    public MessagesAdapter(Context context) {
         mMessages = new ArrayList<>();
         mContext = context;
-        //new GetJson(Urls.getRoomMessagesUrl(), mOnGetRoomMessagesJson).execute();
     }
 
     public void updateMessages(JSONObject jsonObject) {
@@ -97,6 +56,7 @@ public class MessagesAdapter extends BaseAdapter {
                 for (int i = 0; i < count; i++) {
                     mMessages.add(new Message(jsonArray.getJSONObject(i)));
                 }
+
                 Log.v("VIC:", "message count:" + count);
                 notifyDataSetChanged();
             } catch (JSONException e) {
@@ -111,7 +71,7 @@ public class MessagesAdapter extends BaseAdapter {
 
     @Override
     public Message getItem(int position) {
-        return mMessages.get(mMessages.size() - 1 - position);
+        return mMessages.get(mMessages.size());
     }
 
     @Override
