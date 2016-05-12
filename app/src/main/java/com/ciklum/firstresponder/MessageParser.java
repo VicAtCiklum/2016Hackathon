@@ -52,6 +52,7 @@ public class MessageParser {
                         break;
                     } else if (message.getText().contains(TAG_OPEN)) {
                         mListener.onIncidentOpen();
+                        break;
                     }
                 }
                 Log.v("VIC:", "message count:" + count);
