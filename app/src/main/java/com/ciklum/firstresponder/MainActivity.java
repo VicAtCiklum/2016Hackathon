@@ -172,12 +172,15 @@ public class MainActivity extends AppCompatActivity implements MessageParser.OnP
         if (mIsActive) {
             if (bpm > MAX_BPM) {
                 bpm = MAX_BPM;
+            } else if (bpm < 0) {
+                bpm = 0;
             }
             mBPMTextView.setText("" + bpm);
             int interval = bpmToIntervalMs(bpm);
-            if (mInterval == 0 && interval > 0) {
+            //if (mInterval == 0 && interval > 0) {
+                mHandler.removeCallbacks(mBeatRunnable);
                 mHandler.post(mBeatRunnable);
-            }
+            //}
             mInterval = interval;
             if (mInterval == 0) {
                 mHeartImage.setVisibility(View.INVISIBLE);
