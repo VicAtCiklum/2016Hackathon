@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements MessageParser.OnP
         mHeartImageInactive = (ImageView) findViewById(R.id.heart_image_inactive);
         mAddress = (TextView) findViewById(R.id.address);
         mThumb = (ImageView) findViewById(R.id.thumb);
+        mThumb.setEnabled(false);
         mThumb.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -199,6 +200,7 @@ public class MainActivity extends AppCompatActivity implements MessageParser.OnP
         mHeartImage.setVisibility(View.INVISIBLE);
         mHeartImageInactive.setVisibility(View.INVISIBLE);
         mThumb.setImageResource(R.drawable.ic_satellite_black_24dp);
+        mThumb.setEnabled(false);
         postClosed();
     }
 
@@ -218,6 +220,7 @@ public class MainActivity extends AppCompatActivity implements MessageParser.OnP
                 result.data.capacity());
         Bitmap thumb = ThumbnailUtils.extractThumbnail(bmp, 50, 50);
         mThumb.setImageBitmap(thumb);
+        mThumb.setEnabled(true);
         mStreetImage.setImageBitmap(bmp);
     }
 
