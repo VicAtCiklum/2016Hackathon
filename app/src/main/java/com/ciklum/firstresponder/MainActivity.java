@@ -1,9 +1,11 @@
 package com.ciklum.firstresponder;
 
+import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.ThumbnailUtils;
 import android.os.Handler;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -11,6 +13,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity implements MessageParser.OnParseMessageListener, JpegDownloader.JpegDownloadListener {
@@ -21,8 +24,13 @@ public class MainActivity extends AppCompatActivity implements MessageParser.OnP
     private boolean mIsActive;
     private MessageParser mMessageParser;
     private TextView mBPMTextView;
-    private ImageView mHeartImage, mThumb, mStreetImage;
+    private ImageView mHeartImage, mThumb, mStreetImage, mHeartImageInactive;
     private TextView mAddress;
+    private int mInterval = 0;
+    private String mAddressString;
+    private AlertDialog mDialog;
+
+    private static final float HEART_ALPHA = 0.6f;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,6 +39,7 @@ public class MainActivity extends AppCompatActivity implements MessageParser.OnP
         mBPMTextView = (TextView)findViewById(R.id.bpm);
         mBPMTextView.setText("0");
         mHeartImage = (ImageView) findViewById(R.id.heart_image);
+        mHeartImageInactive = (ImageView) findViewById(R.id.heart_image_inactive);
         mAddress = (TextView) findViewById(R.id.address);
         mThumb = (ImageView) findViewById(R.id.thumb);
         mThumb.setOnClickListener(new View.OnClickListener() {
@@ -46,10 +55,13 @@ public class MainActivity extends AppCompatActivity implements MessageParser.OnP
                 onStreetImageClicked();
             }
         });
-        mAddress.setText("Address:");
+        mAddress.setText("Not Available");
         startMessagePolling();
         mMessageParser = new MessageParser();
         mMessageParser.setOnMessageListener(this);
+        mHeartImage.setVisibility(View.INVISIBLE);
+        mHeartImage.setAlpha(HEART_ALPHA);
+        mHeartImageInactive.setAlpha(HEART_ALPHA);
 
     }
 
@@ -89,13 +101,67 @@ public class MainActivity extends AppCompatActivity implements MessageParser.OnP
         }
     };
 
+    private void showIncidentDialog(String address) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Incident Alert!");
+        builder.setMessage("Emergency at Address:\n\n" + address + "\n");
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                onAcceptAssignment();
+            }
+        });
+
+        mDialog = builder.create();
+        mDialog.show();
+    }
+
+    private PostJson.PostJsonListener mPostAcceptListener = new PostJson.PostJsonListener() {
+        @Override
+        public void onJsonReceived(JSONObject jsonObject) {
+            Log.v("VIC:", "onPostDone");
+        }
+    };
+    private void postAccept() {
+        PostJson post = new PostJson(Urls.getPostRoomMessageUrl(), mPostAcceptListener);
+        post.execute(generateMessageBody("#accepted"));
+    }
+
+    private void postClosed() {
+        PostJson post = new PostJson(Urls.getPostRoomMessageUrl(), mPostAcceptListener);
+        post.execute(generateMessageBody("#done"));
+    }
+
+
+    private JSONObject generateMessageBody(String message) {
+        JSONObject j = new JSONObject();
+        try {
+            j.put(Urls.ROOM_ID_QUERY, Urls.ROOM_ID);
+            j.put(Urls.TEXT, message);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return j;
+    }
+
+    private void onAcceptAssignment() {
+        mIsActive = true;
+        Log.v("VIC:", "onIncidentOpen: " + mAddressString);
+        mAddress.setText(mAddressString);
+        mHandler.post(mBeatRunnable);
+        mHeartImageInactive.setVisibility(View.VISIBLE);
+        mDialog = null;
+        postAccept();
+    }
+
     @Override
     public void onIncidentOpen(String address) {
         //ignore if we're already active
-        if(!mIsActive) {
-            mIsActive = true;
-            Log.v("VIC:", "onIncidentOpen: " + address);
-            mAddress.setText("Address:\n" + address);
+        if(!mIsActive && mDialog == null) {
+            showIncidentDialog(address);
+            mAddressString = address;
         }
     }
 
@@ -107,6 +173,18 @@ public class MainActivity extends AppCompatActivity implements MessageParser.OnP
                 bpm = MAX_BPM;
             }
             mBPMTextView.setText("" + bpm);
+            int interval = bpmToIntervalMs(bpm);
+            if (mInterval == 0 && interval > 0) {
+                mHandler.post(mBeatRunnable);
+            }
+            mInterval = interval;
+            if (mInterval == 0) {
+                mHeartImage.setVisibility(View.INVISIBLE);
+                mHeartImageInactive.setVisibility(View.VISIBLE);
+            } else {
+                mHeartImage.setVisibility(View.VISIBLE);
+                mHeartImageInactive.setVisibility(View.INVISIBLE);
+            }
         }
     }
 
@@ -115,7 +193,13 @@ public class MainActivity extends AppCompatActivity implements MessageParser.OnP
         Log.v("VIC:", "onIncidentStop");
         mIsActive = false;
         mBPMTextView.setText("0");
-        mAddress.setText("Address:");
+        mAddress.setText("Not Available");
+        mHandler.removeCallbacks(null);
+        mInterval = 0;
+        mHeartImage.setVisibility(View.INVISIBLE);
+        mHeartImageInactive.setVisibility(View.INVISIBLE);
+        mThumb.setImageResource(R.drawable.ic_satellite_black_24dp);
+        postClosed();
     }
 
     @Override
@@ -141,6 +225,29 @@ public class MainActivity extends AppCompatActivity implements MessageParser.OnP
     public void onBackPressed() {
         if (mStreetImage.getVisibility() == View.VISIBLE) {
             mStreetImage.setVisibility(View.GONE);
+        } else {
+            super.onBackPressed();
         }
     }
+
+    public int bpmToIntervalMs(int bpm) {
+        float bps = (float)bpm/60.0f;
+        int ret = (int)(1000/bps);
+        return ret;
+    }
+
+    private Runnable mBeatRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Log.v("VIC:", "onBeat interval = " + mInterval);
+            mHeartImage.setAlpha(HEART_ALPHA);
+            mHeartImage.setScaleX(1.0f);
+            mHeartImage.setScaleY(1.0f);
+            mHeartImage.animate().
+                    setDuration(mInterval/2).scaleX(0.5f).scaleY(0.5f);
+            if (mInterval > 0) {
+                mHandler.postDelayed(this, mInterval);
+            }
+        }
+    };
 }

@@ -19,12 +19,6 @@ import java.util.ArrayList;
  */
 public class MessagesAdapter extends BaseAdapter {
 
-    public static final String ROOM_ID = "Y2lzY29zcGFyazovL3VzL1JPT00vYzI1ZWIzZjAtMTdiMy0xMWU2LTllNDQtYzlkMTE2OTMzMGY4";
-    public static final String AUTHORIZATION = "Bearer MTA5YWFhZjYtOWM2MS00NTdkLWFkMzctYWQwMzI2OWZlYjZlZTM3ZjUxZTctODQy";
-    public static final String MESSAGES_URL = "https://api.ciscospark.com/v1/messages";
-    public static final String ROOM_ID_QUERY = "roomId";
-
-
 
 
     private ArrayList<Message> mMessages;

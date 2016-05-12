@@ -8,6 +8,8 @@ import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
@@ -16,20 +18,20 @@ import java.net.URL;
 /**
  * Created by victorllana on 5/11/16.
  */
-public class GetJson extends AsyncTask<Void, Void, JSONObject> {
-    public interface GetJsonListener {
+public class PostJson extends AsyncTask<JSONObject, Void, JSONObject> {
+    public interface PostJsonListener {
         public void onJsonReceived(JSONObject jsonObject);
     }
 
-    private GetJsonListener mListener;
+    private PostJsonListener mListener;
     private String mUrl;
-    public GetJson(String url, GetJsonListener listener) {
+    public PostJson(String url, PostJsonListener listener) {
         mUrl = url;
         mListener = listener;
     }
 
     @Override
-    protected JSONObject doInBackground(Void... params) {
+    protected JSONObject doInBackground(JSONObject... params) {
 
         URL fileURL = null;
         JSONObject jsonObject = null;
@@ -37,12 +39,19 @@ public class GetJson extends AsyncTask<Void, Void, JSONObject> {
             fileURL = new URL(mUrl);
             HttpURLConnection connection = (HttpURLConnection) fileURL
                     .openConnection();
-            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
             connection.setRequestProperty("Authorization", Urls.AUTHORIZATION);
-            connection.setRequestMethod("GET");
-            connection.connect();
+            connection.setDoOutput(true);
+            connection.setRequestMethod("POST");
+
+            OutputStream os = connection.getOutputStream();
+            OutputStreamWriter osw = new OutputStreamWriter(os);
+            Log.v("VIC:", "Post Body: \n" + params[0].toString());
+            osw.write(params[0].toString());
+            osw.flush();
+
             int responseCode = connection.getResponseCode();
-            //Log.v("VIC:", "responseCode:" + responseCode);
+            Log.v("VIC:", "responseCode:" + responseCode);
             BufferedInputStream inputStream = new BufferedInputStream(
                     connection.getInputStream());
 
@@ -57,7 +66,7 @@ public class GetJson extends AsyncTask<Void, Void, JSONObject> {
                 stringData.append(temp_read);
                 readSize = inputStream.read(data);
             }
-            //Log.v("VIC:",stringData.toString());
+            Log.v("VIC:",stringData.toString());
             inputStream.close();
                 jsonObject = new JSONObject(stringData.toString());
         } catch (JSONException e) {

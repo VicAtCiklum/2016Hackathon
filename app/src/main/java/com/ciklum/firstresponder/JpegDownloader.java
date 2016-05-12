@@ -42,7 +42,7 @@ public class JpegDownloader extends AsyncTask<String, Void, JpegDownloader.Resul
             HttpURLConnection connection = (HttpURLConnection) fileURL
                     .openConnection();
             connection.setRequestProperty("Content-Type", "application/json");
-            connection.setRequestProperty("Authorization", MessagesAdapter.AUTHORIZATION);
+            connection.setRequestProperty("Authorization", Urls.AUTHORIZATION);
             connection.setRequestMethod("GET");
             connection.connect();
 
