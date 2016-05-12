@@ -1,16 +1,19 @@
 package com.ciklum.firstresponder;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.ThumbnailUtils;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
 
 import org.json.JSONObject;
 
-public class MainActivity extends AppCompatActivity implements MessageParser.OnParseMessageListener{
+public class MainActivity extends AppCompatActivity implements MessageParser.OnParseMessageListener, JpegDownloader.JpegDownloadListener {
     private static final int MSG_POLL_INTERVAL = 5000;
     private static final int MAX_BPM = 200;
     private Handler mHandler = new Handler();
@@ -18,7 +21,7 @@ public class MainActivity extends AppCompatActivity implements MessageParser.OnP
     private boolean mIsActive;
     private MessageParser mMessageParser;
     private TextView mBPMTextView;
-    private ImageView mHeartImage;
+    private ImageView mHeartImage, mThumb, mStreetImage;
     private TextView mAddress;
 
     @Override
@@ -29,19 +32,38 @@ public class MainActivity extends AppCompatActivity implements MessageParser.OnP
         mBPMTextView.setText("0");
         mHeartImage = (ImageView) findViewById(R.id.heart_image);
         mAddress = (TextView) findViewById(R.id.address);
+        mThumb = (ImageView) findViewById(R.id.thumb);
+        mThumb.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onThumbClicked();
+            }
+        });
+        mStreetImage = (ImageView) findViewById(R.id.street_image);
+        mStreetImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onStreetImageClicked();
+            }
+        });
         mAddress.setText("Address:");
         startMessagePolling();
         mMessageParser = new MessageParser();
         mMessageParser.setOnMessageListener(this);
+
     }
 
+    private void onStreetImageClicked() {
+        mStreetImage.setVisibility(View.GONE);
+    }
+
+    private void onThumbClicked() {
+        mStreetImage.setVisibility(View.VISIBLE);
+    }
 
     private GetJson.GetJsonListener mOnGetRoomMessagesJson = new GetJson.GetJsonListener() {
         @Override
         public void onJsonReceived(JSONObject jsonObject) {
-            //mAdapter.updateMessages(jsonObject);
-            //mAdapter.notifyDataSetChanged();
-            //mListView.setSelection(mAdapter.getCount() - 1);
             mIsPolling = false;
             mMessageParser.parseMessage(jsonObject);
             mHandler.postDelayed(mPollMessages, MSG_POLL_INTERVAL);
@@ -94,5 +116,31 @@ public class MainActivity extends AppCompatActivity implements MessageParser.OnP
         mIsActive = false;
         mBPMTextView.setText("0");
         mAddress.setText("Address:");
+    }
+
+    @Override
+    public void onAttachment(String urls[]) {
+        for (int i = 0; i < urls.length; i++) {
+            Log.v("VIC:", "onAttachment: " + urls[i]);
+            JpegDownloader jpgdl = new JpegDownloader(this);
+            jpgdl.execute(urls[i]);
+        }
+    }
+
+    @Override
+    public void onResult(JpegDownloader.Result result) {
+        Bitmap bmp = BitmapFactory.decodeByteArray(result.data.array(),
+                0,
+                result.data.capacity());
+        Bitmap thumb = ThumbnailUtils.extractThumbnail(bmp, 50, 50);
+        mThumb.setImageBitmap(thumb);
+        mStreetImage.setImageBitmap(bmp);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (mStreetImage.getVisibility() == View.VISIBLE) {
+            mStreetImage.setVisibility(View.GONE);
+        }
     }
 }

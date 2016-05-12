@@ -26,17 +26,6 @@ public class MessagesAdapter extends BaseAdapter {
 
 
 
-    /*
-    "id" : "46ef3f0a-e810-460c-ad37-c161adb48195",
-            "personId" : "49465565-f6db-432f-ab41-34b15f544a36",
-            "personEmail" : "matt@example.com",
-            "roomId" : "24aaa2aa-3dcc-11e5-a152-fe34819cdc9a",
-            "text" : "PROJECT UPDATE - A new project project plan has been published on Box",
-            "files" : [ "http://www.example.com/images/media.png" ],
-            "toPersonId" : "Y2lzY29zcGFyazovL3VzL1BFT1BMRS9mMDZkNzFhNS0wODMzLTRmYTUtYTcyYS1jYzg5YjI1ZWVlMmX",
-            "toPersonEmail" : "julie@example.com",
-            "created" : "2015-10-18T14:26:16+00:00"
-            */
 
     private ArrayList<Message> mMessages;
     private Context mContext;
@@ -82,6 +71,7 @@ public class MessagesAdapter extends BaseAdapter {
     private static final int USER_KEY = R.id.user;
     private static final int MSG_KEY = R.id.message;
     private static final int TIME_KEY = R.id.date;
+
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         View v = convertView;

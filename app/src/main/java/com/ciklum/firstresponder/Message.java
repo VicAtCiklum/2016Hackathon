@@ -1,5 +1,6 @@
 package com.ciklum.firstresponder;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -43,6 +44,20 @@ public class Message {
         }
 
         return ret;
+    }
+
+    public boolean hasAttachment() {
+        return mJsonObject.has("files");
+    }
+
+    public JSONArray getAttachments() {
+        JSONArray arr = null;
+        try {
+            arr = mJsonObject.getJSONArray("files");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return arr;
     }
 }
 
